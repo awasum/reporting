@@ -204,33 +204,28 @@ public class DepositListReportSpecification implements ReportSpecification {
                     final Query depositProductQuery = this.entityManager.createNativeQuery(this.buildDepositProductQuery(reportRequest, productIdentifier));
                     final List<?> depositProductResultList = depositProductQuery.getResultList();
 
-                    if (depositProductResultList.get(0).toString() != null){
-                        final String product = depositProductResultList.get(0).toString();
-                        values.add(product);
-                    }
+                    depositProductResultList.forEach(product -> {
+                        final Object[] productResultValues = (Object[]) product;
 
-                    if (depositProductResultList.get(1).toString() != null){
-                        final String acountType = depositProductResultList.get(1).toString();
-                        values.add(acountType);
-                    }
+                        for (final Object prod : productResultValues) {
+                            final Value value = new Value();
+                            if (prod != null) {
+                                value.setValues(new String[]{prod.toString()});
+                                //values.add(prod.toString());
+                            } else {
+                                value.setValues(new String[]{});
+                                //values.add(prod.toString());
+                            }
+                            row.getValues().add(value);
+                        }
+                    });
 
-                    int count = accountResultValues.length;
-                    final String accountValue = " (" + accountResultValues[1].toString() + ")";
 
-                    values.add(accountValue);
-
-                    if (accountResultValues[2].toString() != null){
-                        final String state = accountResultValues[2].toString();
-                        values.add(state);
-                    }
-                    if (accountResultValues[3].toString() != null){
-                        final String createdBy = accountResultValues[3].toString();
-                        values.add(createdBy);
-                    }
-
-                    if (accountResultValues[4].toString() != null){
-                        final String createdOn = accountResultValues[4].toString();
-                        values.add(createdOn);
+                    for (int i = 1; i < accountResultValues.length ; i++) {
+                        //final Value value = new Value();
+                        //value.setValues(new String[]{accountResultValues[i].toString()});
+                        values.add(accountResultValues[i].toString());
+                        //row.getValues().add(value);
                     }
                 }
             });
@@ -317,7 +312,7 @@ public class DepositListReportSpecification implements ReportSpecification {
             }
         });
 
-        return "SELECT " + columns.stream().collect(Collectors.joining(", ")) + " " +
+        return "SELECT DISTINCT " + columns.stream().collect(Collectors.joining(", ")) + " " +
                 "FROM shed_product_definitions pd " +
                 "LEFT JOIN shed_product_instances pi on pd.id = pi.product_definition_id " +
                 "WHERE pi.product_definition_id ='" + productIdentifier + "' ";
